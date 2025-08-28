@@ -1,0 +1,186 @@
+﻿<!-- Views/Customer/Products.cshtml -->
+@model List<Product>
+@{
+    ViewData["Title"] = "Our Products";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 text-primary">Our Products</h1>
+            <p class="lead">Browse our extensive collection of high-quality products</p>
+        </div>
+    </div>
+
+    <!-- Filter and Search Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search products...">
+                <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <select id="categoryFilter" class="form-select">
+                <option value="">All Categories</option>
+                @foreach (var category in Model.Select(p => p.Category).Distinct().OrderBy(c => c))
+                {
+                    <option value="@category">@category</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row" id="productsGrid">
+        @if (Model.Any())
+        {
+            foreach (var product in Model)
+            {
+                <div class="col-lg-4 col-md-6 mb-4 product-card" data-category="@product.Category">
+                    <div class="card h-100 shadow-sm">
+                        <div class="position-relative">
+                            @if (product.StockQuantity <= 0)
+                            {
+                                <span class="position-absolute top-0 start-0 badge bg-danger m-2">Out of Stock</span>
+                            }
+                            else if (product.StockQuantity < 10)
+                            {
+                                <span class="position-absolute top-0 start-0 badge bg-warning m-2">Low Stock</span>
+                            }
+                            <img src="@product.ImageUrl" class="card-img-top product-image" alt="@product.Name"
+                                 style="height: 200px; object-fit: cover;">
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text flex-grow-1">@product.Description</p>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="h5 text-primary mb-0">R @product.Price.ToString("N2")</span>
+                                    <span class="text-muted">Stock: @product.StockQuantity</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="badge bg-secondary">@product.Category</span>
+                                    @if (product.StockQuantity > 0)
+                                    {
+                                        <a asp-action="ProductDetails" asp-route-id="@product.RowKey"
+                                           class="btn btn-primary btn-sm stretched-link">
+                                            View Details
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-secondary btn-sm" disabled>Out of Stock</button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <h4 class="alert-heading">No Products Available</h4>
+                    <p>There are currently no products in our catalog.</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- No Results Message (Hidden by default) -->
+    <div id="noResults" class="row d-none">
+        <div class="col-12">
+            <div class="alert alert-warning text-center">
+                <h4 class="alert-heading">No Products Found</h4>
+                <p>We couldn't find any products matching your criteria.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Search functionality
+            $('#searchButton').click(function() {
+                filterProducts();
+            });
+
+            $('#searchInput').on('keyup', function() {
+                filterProducts();
+            });
+
+            // Category filter
+            $('#categoryFilter').change(function() {
+                filterProducts();
+            });
+
+            function filterProducts() {
+                const searchText = $('#searchInput').val().toLowerCase();
+                const category = $('#categoryFilter').val();
+
+                let visibleCount = 0;
+
+                $('.product-card').each(function() {
+                    const productName = $(this).find('.card-title').text().toLowerCase();
+                    const productDescription = $(this).find('.card-text').text().toLowerCase();
+                    const productCategory = $(this).data('category');
+
+                    const matchesSearch = searchText === '' ||
+                                        productName.includes(searchText) ||
+                                        productDescription.includes(searchText);
+                    const matchesCategory = category === '' || productCategory === category;
+
+                    if (matchesSearch && matchesCategory) {
+                        $(this).removeClass('d-none');
+                        visibleCount++;
+                    } else {
+                        $(this).addClass('d-none');
+                    }
+                });
+
+                // Show/hide no results message
+                if (visibleCount === 0) {
+                    $('#noResults').removeClass('d-none');
+                    $('#productsGrid').addClass('d-none');
+                } else {
+                    $('#noResults').addClass('d-none');
+                    $('#productsGrid').removeClass('d-none');
+                }
+            }
+        });
+    </script>
+
+    <style>
+        .product-card {
+            transition: transform 0.3s ease;
+        }
+
+            .product-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .product-image {
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+    </style>
+}

@@ -1,0 +1,358 @@
+﻿@model List<ABCRetail.Cloud.Models.Order>
+@{
+    ViewData["Title"] = "Orders Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Orders Management</h1>
+        <div class="d-flex">
+            <form asp-action="RepairOrderData" method="post" class="me-2" onsubmit="return confirm('This will repair order data and pricing. Continue?');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-warning btn-sm">
+                    <i class="fas fa-tools"></i> Repair Order Data
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filter Section -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filter Orders</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="@Context.Request.Query["search"]" 
+                           placeholder="Order ID or Customer ID">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All Statuses</option>
+                        @{
+                            var statusQuery = Context.Request.Query["status"].ToString();
+                            var statuses = new[] { "Pending", "Processing", "Shipped", "Delivered", "Completed", "Cancelled" };
+
+                            foreach (var s in statuses)
+                            {
+                                if (statusQuery == s)
+                                {
+                                    <option value="@s" selected="selected">@s</option>
+                                }
+                                else
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                            }
+                        }
+                    </select>
+
+                </div>
+                <div class="col-md-3">
+                    <label for="fromDate" class="form-label">From Date</label>
+                    <input type="date" class="form-control" id="fromDate" name="fromDate" 
+                           value="@Context.Request.Query["fromDate"]">
+                </div>
+                <div class="col-md-3">
+                    <label for="toDate" class="form-label">To Date</label>
+                    <input type="date" class="form-control" id="toDate" name="toDate" 
+                           value="@Context.Request.Query["toDate"]">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="@Url.Action("Orders")" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Orders (@ViewBag.TotalCount)</h6>
+        </div>
+        <div class="card-body">
+            @if (Model?.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ordersTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer ID</th>
+                                <th>Order Date</th>
+                                <th>Status</th>
+                                <th>Items Count</th>
+                                <th>Total Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="font-weight-bold">@(order.RowKey?.Substring(0, Math.Min(8, order.RowKey?.Length ?? 0)))</span>
+                                    </td>
+                                    <td>@(order.CustomerId?.Substring(0, Math.Min(8, order.CustomerId?.Length ?? 0)))</td>
+                                    <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(order.Status)">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                    <td>@(order.Items?.Count ?? 0)</td>
+                                    <td>R @order.TotalAmount.ToString("F2")</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-info btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#orderDetailsModal"
+                                                    onclick="showOrderDetails('@order.RowKey', '@order.CustomerId', '@order.OrderDate.ToString("yyyy-MM-dd HH:mm")', '@order.Status', @order.TotalAmount, @Html.Raw(Json.Serialize(order.Items)))">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                            
+                                            @if (order.Status != "Completed" && order.Status != "Cancelled")
+                                            {
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-primary btn-sm dropdown-toggle" 
+                                                            data-bs-toggle="dropdown">
+                                                        <i class="fas fa-edit"></i> Update Status
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        @if (order.Status != "Processing")
+                                                        {
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus('@order.RowKey', 'Processing')">Processing</a></li>
+                                                        }
+                                                        @if (order.Status != "Shipped")
+                                                        {
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus('@order.RowKey', 'Shipped')">Shipped</a></li>
+                                                        }
+                                                        @if (order.Status != "Delivered")
+                                                        {
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus('@order.RowKey', 'Delivered')">Delivered</a></li>
+                                                        }
+                                                        @if (order.Status != "Completed")
+                                                        {
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus('@order.RowKey', 'Completed')">Completed</a></li>
+                                                        }
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li><a class="dropdown-item text-danger" href="#" onclick="updateOrderStatus('@order.RowKey', 'Cancelled')">Cancel</a></li>
+                                                    </ul>
+                                                </div>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (ViewBag.TotalPages > 1)
+                {
+                    <nav aria-label="Orders pagination">
+                        <ul class="pagination justify-content-center">
+                            @if (ViewBag.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Orders", new { page = ViewBag.CurrentPage - 1, pageSize = ViewBag.PageSize, search = Context.Request.Query["search"], status = Context.Request.Query["status"], fromDate = Context.Request.Query["fromDate"], toDate = Context.Request.Query["toDate"] })">Previous</a>
+                                </li>
+                            }
+
+                            @for (int i = Math.Max(1, ViewBag.CurrentPage - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Orders", new { page = i, pageSize = ViewBag.PageSize, search = Context.Request.Query["search"], status = Context.Request.Query["status"], fromDate = Context.Request.Query["fromDate"], toDate = Context.Request.Query["toDate"] })">@i</a>
+                                </li>
+                            }
+
+                            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Orders", new { page = ViewBag.CurrentPage + 1, pageSize = ViewBag.PageSize, search = Context.Request.Query["search"], status = Context.Request.Query["status"], fromDate = Context.Request.Query["fromDate"], toDate = Context.Request.Query["toDate"] })">Next</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No orders found</h5>
+                    <p class="text-muted">No orders match your current filters.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailsModalLabel">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Order ID:</strong> <span id="modalOrderId"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Customer ID:</strong> <span id="modalCustomerId"></span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Order Date:</strong> <span id="modalOrderDate"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Status:</strong> <span id="modalOrderStatus" class="badge"></span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <strong>Total Amount:</strong> R <span id="modalTotalAmount"></span>
+                    </div>
+                </div>
+                
+                <h6 class="mt-4 mb-3">Order Items</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalOrderItems">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for status updates -->
+<form id="statusUpdateForm" asp-action="UpdateOrderStatus" method="post" style="display: none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="orderIdInput" name="orderId" />
+    <input type="hidden" id="statusInput" name="status" />
+</form>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "bg-warning text-dark",
+            "Processing" => "bg-info",
+            "Shipped" => "bg-primary",
+            "Delivered" => "bg-success",
+            "Completed" => "bg-success",
+            "Cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        function showOrderDetails(orderId, customerId, orderDate, status, totalAmount, items) {
+            document.getElementById('modalOrderId').textContent = orderId;
+            document.getElementById('modalCustomerId').textContent = customerId;
+            document.getElementById('modalOrderDate').textContent = orderDate;
+            document.getElementById('modalTotalAmount').textContent = totalAmount.toFixed(2);
+            
+            const statusSpan = document.getElementById('modalOrderStatus');
+            statusSpan.textContent = status;
+            statusSpan.className = 'badge ' + getStatusBadgeClass(status);
+            
+            const itemsContainer = document.getElementById('modalOrderItems');
+            itemsContainer.innerHTML = '';
+            
+            if (items && items.length > 0) {
+                items.forEach(item => {
+                    const row = document.createElement('tr');
+                    const itemTotal = (item.unitPrice * item.quantity).toFixed(2);
+                    row.innerHTML = `
+                        <td>${item.productId ? item.productId.substring(0, Math.min(8, item.productId.length)) : 'N/A'}</td>
+                        <td>${item.quantity}</td>
+                        <td>R ${item.unitPrice.toFixed(2)}</td>
+                        <td>R ${itemTotal}</td>
+                    `;
+                    itemsContainer.appendChild(row);
+                });
+            } else {
+                itemsContainer.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No items found</td></tr>';
+            }
+        }
+        
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'Pending': return 'bg-warning text-dark';
+                case 'Processing': return 'bg-info';
+                case 'Shipped': return 'bg-primary';
+                case 'Delivered': return 'bg-success';
+                case 'Completed': return 'bg-success';
+                case 'Cancelled': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+        
+        function updateOrderStatus(orderId, status) {
+            if (confirm(`Are you sure you want to update this order status to ${status}?`)) {
+                document.getElementById('orderIdInput').value = orderId;
+                document.getElementById('statusInput').value = status;
+                document.getElementById('statusUpdateForm').submit();
+            }
+        }
+        
+        // Initialize DataTable for better sorting and searching
+        $(document).ready(function() {
+            if ($('#ordersTable tbody tr').length > 0) {
+                $('#ordersTable').DataTable({
+                    "paging": false,
+                    "ordering": true,
+                    "info": false,
+                    "searching": false,
+                    "order": [[2, "desc"]], // Sort by order date descending
+                    "columnDefs": [
+                        { "orderable": false, "targets": [6] } // Disable sorting on Actions column
+                    ]
+                });
+            }
+        });
+    </script>
+}

@@ -1,0 +1,42 @@
+﻿@* Views/Shared/_LoginPartial.cshtml *@
+<ul class="navbar-nav">
+    @if (User?.Identity?.IsAuthenticated ?? false)
+    {
+        <li class="nav-item">
+            <a class="nav-link text-light"
+               asp-area=""
+               asp-controller="Home"
+               asp-action="Index">
+                Hello @User.Identity.Name!
+            </a>
+        </li>
+
+        @* Show admin link only if role claim exists *@
+        @if (User.IsInRole("Admin"))
+        {
+            <li class="nav-item">
+                <a class="nav-link text-warning"
+                   asp-area=""
+                   asp-controller="Admin"
+                   asp-action="Index">
+                    Admin Panel
+                </a>
+            </li>
+        }
+
+        <li class="nav-item">
+            <form class="form-inline" asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="nav-link btn btn-link text-light">Logout</button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link text-light" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-light" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+        </li>
+    }
+</ul>

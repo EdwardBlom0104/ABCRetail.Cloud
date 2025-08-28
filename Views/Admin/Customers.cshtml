@@ -1,0 +1,180 @@
+﻿@model IEnumerable<ABCRetail.Cloud.Models.Customer>
+@{
+    ViewData["Title"] = "Customers";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Customers</h1>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    <!-- Filter Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Filter Customers</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" asp-action="Customers" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control" placeholder="Search by name or email"
+                           value="@Context.Request.Query["search"]" />
+                </div>
+                <div class="col-md-2">
+                    <select name="country" class="form-control">
+                        <option value="">All Countries</option>
+                        <option value="South Africa" selected>South Africa</option>
+                        <option value="USA">USA</option>
+                        <option value="UK">UK</option>
+                        <option value="Australia">Australia</option>
+                        <option value="Canada">Canada</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="city" class="form-control">
+                        <option value="">All Cities</option>
+                        <option value="Johannesburg">Johannesburg</option>
+                        <option value="Cape Town">Cape Town</option>
+                        <option value="Durban">Durban</option>
+                        <option value="Pretoria">Pretoria</option>
+                        <option value="Port Elizabeth">Port Elizabeth</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </div>
+                <div class="col-md-2">
+                    <a asp-action="Customers" class="btn btn-outline-secondary w-100">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Registration Date</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Country</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                int index = 1;
+                foreach (var customer in Model)
+                {
+                    <tr>
+                        <td>@index</td>
+                        <td>@(customer.FirstName + " " + customer.LastName)</td>
+                        <td>@customer.Email</td>
+                        <td>@customer.PhoneNumber</td>
+                        <td>@customer.RegistrationDate.ToString("yyyy-MM-dd")</td>
+                        <td>@customer.City</td>
+                        <td>@customer.State</td>
+                        <td>South Africa</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a asp-action="EditCustomer" asp-route-id="@customer.RowKey"
+                                   class="btn btn-sm btn-warning" title="Edit Customer">
+                                    Edit
+                                </a>
+                                <form asp-action="DeleteCustomer" asp-route-id="@customer.RowKey"
+                                      method="post" onsubmit="return confirm('Are you sure you want to delete this customer?');"
+                                      class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete Customer">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    index++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="text-center">No customers found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @* Pagination *@
+    <nav aria-label="Customer pagination">
+        <ul class="pagination justify-content-center">
+            @{
+                int totalPages = ViewBag.TotalPages ?? 1;
+                int currentPage = ViewBag.CurrentPage ?? 1;
+                string search = Context.Request.Query["search"];
+                string country = Context.Request.Query["country"];
+                string city = Context.Request.Query["city"];
+            }
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Customers"
+                   asp-route-page="@(currentPage - 1)"
+                   asp-route-search="@search"
+                   asp-route-country="@country"
+                   asp-route-city="@city">Previous</a>
+            </li>
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Customers"
+                       asp-route-page="@i"
+                       asp-route-search="@search"
+                       asp-route-country="@country"
+                       asp-route-city="@city">@i</a>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Customers"
+                   asp-route-page="@(currentPage + 1)"
+                   asp-route-search="@search"
+                   asp-route-country="@country"
+                   asp-route-city="@city">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+@section Scripts {
+    <script>
+        // Set default country to South Africa
+        document.addEventListener('DOMContentLoaded', function() {
+            const countrySelect = document.querySelector('select[name="country"]');
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (!urlParams.has('country')) {
+                countrySelect.value = 'South Africa';
+            } else {
+                countrySelect.value = urlParams.get('country');
+            }
+
+            // Set city filter from URL if present
+            const citySelect = document.querySelector('select[name="city"]');
+            if (urlParams.has('city')) {
+                citySelect.value = urlParams.get('city');
+            }
+        });
+    </script>
+}

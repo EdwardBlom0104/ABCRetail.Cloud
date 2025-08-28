@@ -1,0 +1,135 @@
+﻿@model ABCRetail.Cloud.Models.ViewModels.ProductViewModel
+@{
+    ViewData["Title"] = "Edit Product";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Edit Product</h1>
+        <a asp-action="Products" class="btn btn-outline-secondary">Back to Products</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="EditProduct" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="PartitionKey" />
+                <input type="hidden" asp-for="RowKey" />
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label">Product Name</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Price" class="form-label">Price (R)</label>
+                                    <input asp-for="Price" type="number" step="0.01" class="form-control" required />
+                                    <span asp-validation-for="Price" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="StockQuantity" class="form-label">Stock Quantity</label>
+                                    <input asp-for="StockQuantity" type="number" class="form-control" required />
+                                    <span asp-validation-for="StockQuantity" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Category" class="form-label">Category</label>
+                            <input asp-for="Category" class="form-control" />
+                            <span asp-validation-for="Category" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="ExistingImageUrl" class="form-label">Current Image</label>
+                            @if (!string.IsNullOrEmpty(Model.ExistingImageUrl))
+                            {
+                                <img src="@Model.ExistingImageUrl" alt="@Model.Name" class="img-fluid mb-2" style="max-height: 200px;" />
+                            }
+                            else
+                            {
+                                <div class="text-muted">No image available</div>
+                            }
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="ImageUrl" class="form-label">Or Enter New Image URL</label>
+                            <input asp-for="ImageUrl" class="form-control" />
+                            <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Or Upload New Image</label>
+                            <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                        </div>
+
+                        <div class="mt-4 p-3 border rounded text-center">
+                            <p class="text-muted">Image Preview</p>
+                            <img id="imagePreview" src="#" alt="Preview" style="max-height: 200px; display: none;" class="img-fluid mb-2" />
+                            <div id="noImageText" class="text-muted">No image selected</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary me-2">Update Product</button>
+                    <a asp-action="Products" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Image URL preview
+        document.getElementById('ImageUrl').addEventListener('input', function () {
+            const preview = document.getElementById('imagePreview');
+            const noImage = document.getElementById('noImageText');
+
+            if (this.value) {
+                preview.src = this.value;
+                preview.style.display = 'block';
+                noImage.style.display = 'none';
+            } else {
+                preview.style.display = 'none';
+                noImage.style.display = 'block';
+            }
+        });
+
+        // File upload preview
+        document.querySelector('input[type="file"]').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const preview = document.getElementById('imagePreview');
+                    const noImage = document.getElementById('noImageText');
+
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    noImage.style.display = 'none';
+
+                    // Clear URL field when uploading file
+                    document.getElementById('ImageUrl').value = '';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+}

@@ -1,0 +1,98 @@
+﻿@model IEnumerable<ABCRetail.Cloud.Models.Product>
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Products</h1>
+        <a asp-action="AddProduct" class="btn btn-primary">Add New Product</a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Price (R)</th>
+                <th>Stock</th>
+                <th>Image</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                int index = 1;
+                foreach (var product in Model)
+                {
+                    <tr>
+                        <td>@index</td>
+                        <td>@product.Name</td>
+                        <td>@product.Description</td>
+                        <td>@product.Category</td>
+                        <td>@product.Price.ToString("F2")</td>
+                        <td>@product.StockQuantity</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(product.ImageUrl))
+                            {
+                                <img src="@product.ImageUrl" alt="@product.Name" style="max-height: 50px;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">No image</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="EditProduct" asp-route-id="@product.RowKey" class="btn btn-sm btn-warning me-1">Edit</a>
+                            <form asp-action="DeleteProduct" asp-route-id="@product.RowKey" method="post" style="display:inline-block;">
+                                <input type="hidden" name="id" value="@product.RowKey" />
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this product?');">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    index++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="text-center">No products found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @* Pagination *@
+    <nav aria-label="Product pagination">
+        <ul class="pagination justify-content-center">
+            @{
+                int totalPages = ViewBag.TotalPages ?? 1;
+                int currentPage = ViewBag.CurrentPage ?? 1;
+            }
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Products" asp-route-page="@(currentPage - 1)">Previous</a>
+            </li>
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Products" asp-route-page="@i">@i</a>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Products" asp-route-page="@(currentPage + 1)">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>

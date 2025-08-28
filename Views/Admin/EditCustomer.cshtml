@@ -1,0 +1,203 @@
+﻿@model ABCRetail.Cloud.Models.Customer
+@{
+    ViewData["Title"] = "Edit Customer";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Edit Customer</h1>
+        <a asp-action="Customers" class="btn btn-outline-secondary">Back to Customers</a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Customer Information</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="EditCustomer" method="post">
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(model => model.RowKey)
+                @Html.HiddenFor(model => model.PartitionKey)
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input asp-for="FirstName" class="form-control" required />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input asp-for="LastName" class="form-control" required />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input asp-for="Email" class="form-control" type="email" required />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                            <input asp-for="PhoneNumber" class="form-control" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Address" class="form-label">Address</label>
+                    <textarea asp-for="Address" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="City" class="form-label">City</label>
+                            <select asp-for="City" class="form-control">
+                                <option value="">Select City</option>
+                                <option value="Johannesburg">Johannesburg</option>
+                                <option value="Cape Town">Cape Town</option>
+                                <option value="Durban">Durban</option>
+                                <option value="Pretoria">Pretoria</option>
+                                <option value="Port Elizabeth">Port Elizabeth</option>
+                                <option value="Bloemfontein">Bloemfontein</option>
+                                <option value="East London">East London</option>
+                                <option value="Pietermaritzburg">Pietermaritzburg</option>
+                                <option value="Nelspruit">Nelspruit</option>
+                                <option value="Kimberley">Kimberley</option>
+                                <option value="Polokwane">Polokwane</option>
+                                <option value="Rustenburg">Rustenburg</option>
+                                <option value="George">George</option>
+                                <option value="Witbank">Witbank</option>
+                                <option value="Vanderbijlpark">Vanderbijlpark</option>
+                            </select>
+                            <span asp-validation-for="City" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="State" class="form-label">Province/State</label>
+                            <select asp-for="State" class="form-control">
+                                <option value="">Select Province</option>
+                                <option value="Gauteng">Gauteng</option>
+                                <option value="Western Cape">Western Cape</option>
+                                <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                                <option value="Eastern Cape">Eastern Cape</option>
+                                <option value="Free State">Free State</option>
+                                <option value="Limpopo">Limpopo</option>
+                                <option value="Mpumalanga">Mpumalanga</option>
+                                <option value="Northern Cape">Northern Cape</option>
+                                <option value="North West">North West</option>
+                            </select>
+                            <span asp-validation-for="State" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="Country" class="form-label">Country</label>
+                            <select asp-for="Country" class="form-control">
+                                <option value="South Africa">South Africa</option>
+                                <option value="USA">USA</option>
+                                <option value="UK">UK</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Germany">Germany</option>
+                                <option value="France">France</option>
+                                <option value="Netherlands">Netherlands</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="Country" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Registration Date</label>
+                            <input type="text" class="form-control" value="@Model.RegistrationDate.ToString("yyyy-MM-dd")" readonly />
+                            <small class="form-text text-muted">Registration date cannot be changed</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary me-2">Update Customer</button>
+                    <a asp-action="Customers" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Set default country to South Africa if not already set
+        document.addEventListener('DOMContentLoaded', function() {
+            const countrySelect = document.querySelector('select[name="Country"]');
+            if (!countrySelect.value) {
+                countrySelect.value = 'South Africa';
+            }
+
+            // Dynamic city/province matching for South Africa
+            const stateSelect = document.querySelector('select[name="State"]');
+            const citySelect = document.querySelector('select[name="City"]');
+
+            function updateCityOptions() {
+                const selectedState = stateSelect.value;
+                const cityOptions = citySelect.querySelectorAll('option');
+
+                // Show all cities by default
+                cityOptions.forEach(option => {
+                    if (option.value === '') return; // Keep the default option
+                    option.style.display = 'block';
+                });
+
+                // Hide cities that don't match the selected province
+                if (selectedState) {
+                    const cityProvinceMap = {
+                        'Gauteng': ['Johannesburg', 'Pretoria', 'Vanderbijlpark'],
+                        'Western Cape': ['Cape Town', 'George'],
+                        'KwaZulu-Natal': ['Durban', 'Pietermaritzburg'],
+                        'Eastern Cape': ['Port Elizabeth', 'East London'],
+                        'Free State': ['Bloemfontein'],
+                        'Limpopo': ['Polokwane'],
+                        'Mpumalanga': ['Nelspruit', 'Witbank'],
+                        'Northern Cape': ['Kimberley'],
+                        'North West': ['Rustenburg']
+                    };
+
+                    if (cityProvinceMap[selectedState]) {
+                        cityOptions.forEach(option => {
+                            if (option.value !== '' && !cityProvinceMap[selectedState].includes(option.value)) {
+                                option.style.display = 'none';
+                            }
+                        });
+                    }
+                }
+            }
+
+            stateSelect.addEventListener('change', updateCityOptions);
+            updateCityOptions(); // Initial call
+        });
+    </script>
+}

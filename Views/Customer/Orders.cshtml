@@ -1,0 +1,217 @@
+﻿<!-- Views/Customer/Orders.cshtml -->
+@model List<Order>
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 text-primary">My Orders</h1>
+            <p class="lead">View your order history and track current orders</p>
+        </div>
+    </div>
+
+    <!-- Orders Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Orders</h5>
+                    <h3 class="card-text">@Model.Count</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Completed</h5>
+                    <h3 class="card-text">@Model.Count(o => o.Status == "Completed")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-warning text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Processing</h5>
+                    <h3 class="card-text">@Model.Count(o => o.Status == "Processing")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <h3 class="card-text">@Model.Count(o => o.Status == "Pending")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Order History</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover" id="ordersTable">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Items</th>
+                                <th>Total Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model.OrderByDescending(o => o.OrderDate))
+                            {
+                                <tr>
+                                    <td>@order.RowKey</td>
+                                    <td>@order.OrderDate.ToString("MMM dd, yyyy h:mm tt")</td>
+                                    <td>@order.Items.Sum(i => i.Quantity)</td>
+                                    <td>R@(order.TotalAmount.ToString("N2"))</td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(order.Status)">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="OrderDetails" asp-route-id="@order.RowKey"
+                                           class="btn btn-sm btn-outline-primary">View Details</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Filter Controls -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <label for="statusFilter" class="form-label me-2">Filter by status:</label>
+                        <select id="statusFilter" class="form-select form-select-sm d-inline-block" style="width: auto;">
+                            <option value="">All Orders</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button id="sortDateBtn" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-down-up"></i> Sort by Date
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-cart-x" style="font-size: 3rem; color: #6c757d;"></i>
+                    <h4 class="mt-3">No orders yet</h4>
+                    <p class="text-muted">You haven't placed any orders yet.</p>
+                    <a asp-action="Products" class="btn btn-primary mt-2">Browse Products</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        switch (status)
+        {
+            case "Completed":
+                return "bg-success";
+            case "Processing":
+                return "bg-warning";
+            case "Pending":
+                return "bg-info";
+            default:
+                return "bg-secondary";
+        }
+    }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let dateAscending = false;
+
+            // Status filter functionality
+            $('#statusFilter').change(function() {
+                const status = $(this).val();
+
+                if (status === "") {
+                    $('#ordersTable tbody tr').show();
+                } else {
+                    $('#ordersTable tbody tr').each(function() {
+                        const rowStatus = $(this).find('.badge').text().trim();
+                        if (rowStatus === status) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                }
+            });
+
+            // Date sort functionality
+            $('#sortDateBtn').click(function() {
+                const rows = $('#ordersTable tbody tr').get();
+
+                rows.sort(function(a, b) {
+                    const dateA = new Date($(a).find('td:eq(1)').text());
+                    const dateB = new Date($(b).find('td:eq(1)').text());
+
+                    return dateAscending ? dateA - dateB : dateB - dateA;
+                });
+
+                dateAscending = !dateAscending;
+
+                $.each(rows, function(index, row) {
+                    $('#ordersTable tbody').append(row);
+                });
+
+                // Update button icon
+                const icon = dateAscending ? 'bi-arrow-up' : 'bi-arrow-down';
+                $('#sortDateBtn i').removeClass('bi-arrow-down-up bi-arrow-up bi-arrow-down').addClass(icon);
+            });
+        });
+    </script>
+
+    <style>
+        .card {
+            border: none;
+            border-radius: 10px;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+
+        #ordersTable tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .summary-card {
+            transition: transform 0.3s ease;
+        }
+
+            .summary-card:hover {
+                transform: translateY(-5px);
+            }
+    </style>
+}

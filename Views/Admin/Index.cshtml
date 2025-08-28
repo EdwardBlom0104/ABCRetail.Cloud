@@ -1,0 +1,154 @@
+﻿@model AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container">
+    <h1 class="mb-4">Admin Dashboard</h1>
+
+    <!-- Display success/error messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Add Repair Order Data Button -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">Data Maintenance</h5>
+                    <p class="card-text">If order totals are showing as R 0.00, click this button to repair the order data:</p>
+                    <form asp-action="RepairOrderData" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-warning"
+                                onclick="return confirm('This will repair order data. Continue?')">
+                            Repair Order Totals
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Customers</h5>
+                    <p class="card-text display-4">@Model.CustomerCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Products</h5>
+                    <p class="card-text display-4">@Model.ProductCount</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Orders</h3>
+        </div>
+        <div class="card-body">
+            @if (Model.RecentOrders.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model.RecentOrders)
+                            {
+                                <tr>
+                                    <td>@order.RowKey</td>
+                                    <td>@order.OrderDate.ToString("g")</td>
+                                    <td>@order.CustomerId</td>
+                                    <td>R @order.TotalAmount.ToString("N2")</td>
+                                    <td>
+                                        <span class="badge @(order.Status == "Completed" ? "bg-success" :
+                                                        order.Status == "Processing" ? "bg-warning" :
+                                                        order.Status == "Pending" ? "bg-info" : "bg-secondary")">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <!-- Use form with POST method instead of GET links -->
+                                        <form asp-action="UpdateOrderStatus" method="post" class="d-inline">
+                                            <input type="hidden" name="orderId" value="@order.RowKey" />
+                                            <input type="hidden" name="status" value="Processing" />
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-warning @(order.Status == "Processing" ? "disabled" : "")"
+                                            @(order.Status == "Processing" ? "disabled" : "")>
+                                                Processing
+                                            </button>
+                                        </form>
+                                        <form asp-action="UpdateOrderStatus" method="post" class="d-inline">
+                                            <input type="hidden" name="orderId" value="@order.RowKey" />
+                                            <input type="hidden" name="status" value="Completed" />
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-success @(order.Status == "Completed" ? "disabled" : "")"
+                                            @(order.Status == "Completed" ? "disabled" : "")>
+                                                Complete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">No recent orders found.</div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Add JavaScript to handle page refresh after status update -->
+@section Scripts {
+    <script>
+        // Force page reload when coming back from status update
+        if (performance.navigation.type === 2) {
+            location.reload(true);
+        }
+
+        // Alternatively, listen for form submissions and reload after they complete
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form[action*="UpdateOrderStatus"]');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    // Add a small delay to ensure the POST completes before reload
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 100);
+                });
+            });
+        });
+    </script>
+}

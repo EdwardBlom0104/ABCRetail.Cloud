@@ -1,0 +1,51 @@
+﻿<!-- Views/Home/Index.cshtml -->
+@model List<Product>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center mb-4">
+    <h1 class="display-4">Welcome to ABC Retail</h1>
+    <p class="lead">Your one-stop shop for all your needs</p>
+</div>
+
+@if (Model.Any())
+{
+    <h2 class="mb-4">Featured Products</h2>
+    <div class="row">
+        @foreach (var product in Model)
+        {
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(product.ImageUrl))
+                    {
+                        <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-secondary" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                            <span class="text-white">No Image</span>
+                        </div>
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@product.Name</h5>
+                        <p class="card-text">@product.Description</p>
+                        <p class="card-text"><strong>R @product.Price.ToString("N2")</strong></p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a asp-controller="@(User.IsInRole("Admin") ? "Admin" : "Customer")"
+                           asp-action="@(User.IsInRole("Admin") ? "EditProduct" : "ProductDetails")"
+                           asp-route-id="@product.RowKey"
+                           class="btn btn-primary">
+                            @(User.IsInRole("Admin") ? "Edit" : "View Details")
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No products available at the moment.</div>
+}

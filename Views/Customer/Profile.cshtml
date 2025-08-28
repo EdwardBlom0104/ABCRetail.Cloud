@@ -1,0 +1,205 @@
+﻿@model ABCRetail.Cloud.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Profile</h1>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Update Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UpdateProfile" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input asp-for="FirstName" class="form-control" required />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input asp-for="LastName" class="form-control" required />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label">Email Address</label>
+                            <input asp-for="Email" class="form-control" type="email" readonly />
+                            <small class="form-text text-muted">Email address cannot be changed. Contact support if you need to update this.</small>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                            <input asp-for="PhoneNumber" class="form-control" type="tel" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Address" class="form-label">Address</label>
+                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter your full address"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-save me-1"></i> Update Profile
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Account Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="ChangePassword" class="btn btn-outline-warning">
+                            <i class="fas fa-key me-1"></i> Change Password
+                        </a>
+                        <a asp-action="Orders" class="btn btn-outline-info">
+                            <i class="fas fa-shopping-bag me-1"></i> View My Orders
+                        </a>
+                        <a asp-action="Products" class="btn btn-outline-success">
+                            <i class="fas fa-shopping-cart me-1"></i> Browse Products
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Profile Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Keep your contact information up to date
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Ensure your address is accurate for deliveries
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Change your password regularly for security
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Add a phone number for order updates
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss success messages after 5 seconds
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(successAlert);
+                    bsAlert.close();
+                }, 5000);
+            }
+
+            // Format phone number input
+            const phoneInput = document.querySelector('input[name="PhoneNumber"]');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    // Remove all non-digit characters
+                    let value = e.target.value.replace(/\D/g, '');
+
+                    // Format South African phone numbers
+                    if (value.length > 0) {
+                        if (value.startsWith('27')) {
+                            // International format
+                            if (value.length <= 11) {
+                                value = value.replace(/(\d{2})(\d{2})(\d{3})(\d{4})/, '+$1 $2 $3 $4');
+                            }
+                        } else if (value.startsWith('0')) {
+                            // Local format
+                            if (value.length <= 10) {
+                                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+                            }
+                        }
+                    }
+
+                    e.target.value = value;
+                });
+            }
+
+            // Add character counter for address field
+            const addressField = document.querySelector('textarea[name="Address"]');
+            if (addressField) {
+                const maxLength = 500;
+                const counter = document.createElement('small');
+                counter.className = 'form-text text-muted';
+                counter.style.textAlign = 'right';
+                counter.style.display = 'block';
+                addressField.parentNode.appendChild(counter);
+
+                function updateCounter() {
+                    const remaining = maxLength - addressField.value.length;
+                    counter.textContent = `${addressField.value.length}/${maxLength} characters`;
+
+                    if (remaining < 50) {
+                        counter.className = 'form-text text-warning';
+                    } else if (remaining < 0) {
+                        counter.className = 'form-text text-danger';
+                    } else {
+                        counter.className = 'form-text text-muted';
+                    }
+                }
+
+                addressField.addEventListener('input', updateCounter);
+                addressField.setAttribute('maxlength', maxLength);
+                updateCounter(); // Initial call
+            }
+        });
+    </script>
+}

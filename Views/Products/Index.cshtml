@@ -1,0 +1,147 @@
+﻿@model List<ABCRetail.Cloud.Models.Product>
+@{
+    ViewData["Title"] = "ABC Retail - Products";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Product Management</h2>
+        <a asp-action="Create" class="btn btn-success">Add New Product</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            Product Catalog
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="row">
+                    @foreach (var product in Model)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card product-card h-100">
+                                <!-- Image with enhanced error handling -->
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img src="@product.ImageUrl"
+                                         class="card-img-top product-image"
+                                         alt="@product.Name"
+                                         style="height: 200px; object-fit: cover;"
+                                         onerror="this.onerror=null;this.classList.add('image-error');this.src='/images/placeholder.jpg';this.alt='Image not available'">
+                                }
+                                else
+                                {
+                                    <div class="text-center py-4 bg-light" style="height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                                        <i class="fas fa-image fa-3x text-muted"></i>
+                                        <p class="mt-2">No Image Available</p>
+                                    </div>
+                                }
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">@product.Name</h5>
+                                    <p class="card-text text-muted">@(string.IsNullOrEmpty(product.Description) ? "No description available" : product.Description)</p>
+                                    <div class="mt-auto">
+                                        <!-- Fixed Price Display - Changed from $ to R -->
+                                        <p class="price font-weight-bold">
+                                            @if (product.Price > 0)
+                                            {
+                                                @($"R {product.Price:F2}")
+                                            }
+                                            else
+                                            {
+                                                <span class="text-warning">Price Pending</span>
+                                            }
+                                        </p>
+                                        <p class="stock @(product.StockQuantity > 0 ? "text-success" : "text-danger")">
+                                            @(product.StockQuantity > 0 ? $"In Stock: {product.StockQuantity}" : "Out of Stock")
+                                        </p>
+                                        <a href="#" class="btn btn-primary btn-block">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    No products found. <a asp-action="Create">Add your first product</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .product-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+    .product-image {
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        background-color: #f8f9fa;
+        transition: opacity 0.3s ease;
+    }
+
+    .image-error {
+        filter: grayscale(100%);
+        opacity: 0.7;
+    }
+
+    .price {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        word-break: break-word;
+    }
+
+    .stock {
+        margin-bottom: 1rem;
+        word-break: break-word;
+    }
+
+    .card-text {
+        word-break: break-word;
+        min-height: 3em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-warning {
+        color: #ffc107 !important;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // Enhanced image loading handling
+        document.querySelectorAll('.product-image').forEach(img => {
+            // Show loading state
+            img.style.opacity = '0.5';
+            img.style.transition = 'opacity 0.3s ease, filter 0.3s ease';
+
+            img.onload = function() {
+                this.style.opacity = '1';
+            };
+
+            img.onerror = function() {
+                this.style.opacity = '1';
+                this.classList.add('image-error');
+            };
+        });
+    </script>
+}
